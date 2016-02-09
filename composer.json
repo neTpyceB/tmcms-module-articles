@@ -1,0 +1,21 @@
+{
+  "name": "neTpyceB/TMCms-module-articles",
+  "type": "library",
+  "description": "Module News for TMCms",
+  "keywords": ["module", "articles", "news", "blog", "TMCms"],
+  "homepage": "http://devp.eu/",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Vadims Petrusevs",
+      "email": "info@devp.eu",
+      "homepage": "http://devp.eu/",
+      "role": "Developer"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "TMCms\\Modules\\Articles\\": "src"
+    }
+  }
+}
