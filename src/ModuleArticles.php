@@ -3,6 +3,7 @@
 namespace TMCms\Modules\Articles;
 
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\IModule;
 use TMCms\Traits\singletonInstanceTrait;
 
@@ -19,5 +20,14 @@ class ModuleArticles implements IModule
         }
         $categories->addOrderByField('title');
         return $categories->getPairs('title');
+    }
+
+    public static function getTagPairs($only_active = false) {
+        $tags = new ArticleTagEntityRepository();
+        if ($only_active) {
+            $tags->setWhereActive(1);
+        }
+        $tags->addOrderByField('title');
+        return $tags->getPairs('title');
     }
 }

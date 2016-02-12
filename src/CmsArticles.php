@@ -19,6 +19,7 @@ use TMCms\Modules\Articles\Entity\ArticleEntity;
 use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntity;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleTagRelationEntityRepository;
 
 defined('INC') or exit;
 
@@ -46,8 +47,10 @@ class CmsArticles
 
         echo CmsTable::getInstance()
             ->addData($news)
-            ->addColumn(ColumnData::getInstance('title'))
-            ->addColumn(ColumnData::getInstance('category')
+            ->addColumn(ColumnData::getInstance('title')
+                ->enableTranslationColumn()
+            )
+            ->addColumn(ColumnData::getInstance('category_id')
                 ->setPairedDataOptionsForKeys($category->getPairs('title'))
             )
             ->addColumn(ColumnEdit::getInstance('edit'))
@@ -66,6 +69,11 @@ class CmsArticles
             'fields' => [
                 'category_id' => [
                     'options' => ModuleArticles::getCategoryPairs(),
+                    'title' => 'Category',
+                ],
+                'tags' => [
+                    'type' => 'multiselect',
+                    'options' => ModuleArticles::getTagPairs(),
                 ],
                 'title' => [
                     'translation' => true,
@@ -97,32 +105,75 @@ class CmsArticles
 
     public function edit()
     {
+        $article = new ArticleEntity($_GET['id']);
         echo BreadCrumbs::getInstance()
-            ->addCrumb(__(P))
-            ->addCrumb('TITLE')
+            ->addCrumb(__('Articles'))
+            ->addCrumb($article->getTitle())
         ;
 
-        $form = $this->__add_edit_form();
+        $article->setTags(ArticleTagRelationEntityRepository::getInstance()
+            ->setWhereArticleId($article->getId())
+            ->getPairs('tag_id')
+        );
+
+        echo $this->__add_edit_form($article)
+            ->setSubmitButton('Update')
+        ;
     }
 
     public function _add()
     {
+        $article = new ArticleEntity();
+        $article->loadDataFromArray($_POST);
+        $article->save();
 
+        Messages::sendGreenAlert('Article created');
+        App::add('Article ' . $article->getTitle() . ' created');
+
+        go('?p=' . P . '&highlight='. $article->getId());
     }
 
     public function _edit()
     {
+        $article = new ArticleEntity($_GET['id']);
+        $article->loadDataFromArray($_POST);
+        $article->save();
 
+        Messages::sendGreenAlert('Article created');
+        App::add('Article ' . $article->getTitle() . ' created');
+
+        go('?p=' . P . '&highlight='. $article->getId());
     }
 
     public function _active()
     {
+        $article = new ArticleEntity($_GET['id']);
+        $article->flipBoolValue('active');
+        $article->save();
 
+        Messages::sendGreenAlert('Article updated');
+        App::add('Article ' . $article->getTitle() . ' updated');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P . '&highlight='. $article->getId());
     }
 
     public function _delete()
     {
+        $article = new ArticleEntity($_GET['id']);
+        $article->deleteObject();
 
+        Messages::sendGreenAlert('Article deleted');
+        App::add('Article ' . $article->getTitle() . ' deleted');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P);
     }
 
     /** Categories */
@@ -180,10 +231,16 @@ class CmsArticles
 
     public function categories_edit()
     {
+        $category = new ArticleCategoryEntity($_GET['id']);
+
         echo BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Categories'))
-            ->addCrumb('TITLE')
+            ->addCrumb($category->getTitle())
+        ;
+
+        echo $this->__tags_add_edit_form($category)
+            ->setSubmitButton('Update')
         ;
     }
 
@@ -201,17 +258,45 @@ class CmsArticles
 
     public function _categories_edit()
     {
+        $category = new ArticleCategoryEntity($_GET['id']);
+        $category->loadDataFromArray($_POST);
+        $category->save();
 
+        Messages::sendGreenAlert('Category updated');
+        App::add('Category ' . $category->getTitle() . ' updated');
+
+        go('?p=' . P . '&do=tags&highlight='. $category->getId());
     }
 
     public function _categories_active()
     {
+        $category = new ArticleCategoryEntity($_GET['id']);
+        $category->flipBoolValue('active');
+        $category->save();
 
+        Messages::sendGreenAlert('Category updated');
+        App::add('Category ' . $category->getTitle() . ' updated');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P . '&do=tags&highlight='. $category->getId());
     }
 
     public function _categories_delete()
     {
+        $category = new ArticleCategoryEntity($_GET['id']);
+        $category->deleteObject();
 
+        Messages::sendGreenAlert('Category deleted');
+        App::add('Category ' . $category->getTitle() . ' deleted');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P . '&do=categories');
     }
 
     /** Tags */
@@ -274,7 +359,7 @@ class CmsArticles
         echo BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Tags'))
-            ->addCrumb('TITLE')
+            ->addCrumb($tag->getTitle())
         ;
 
         echo $this->__tags_add_edit_form($tag)
@@ -334,6 +419,6 @@ class CmsArticles
             die('1');
         }
 
-        go('?p=' . P . '&do=tags&highlight='. $tag->getId());
+        go('?p=' . P . '&do=tags');
     }
 }
