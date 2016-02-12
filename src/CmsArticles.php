@@ -17,6 +17,8 @@ use TMCms\Modules\Articles\Entity\ArticleCategoryEntity;
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleEntity;
 use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleTagEntity;
+use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 
 defined('INC') or exit;
 
@@ -214,17 +216,44 @@ class CmsArticles
 
     /** Tags */
 
-    private function __tags_add_edit_form()
-    {
-
-    }
-
     public function tags() {
+        $tags = new ArticleTagEntityRepository();
 
         echo BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Tags'))
         ;
+
+        echo Columns::getInstance()
+            ->add('<a class="btn btn-success" href="?p=' . P . '&do=tags_add">'. __('Add Tag') . '</a><br><br>', ['align' => 'right'])
+        ;
+
+        echo CmsTable::getInstance()
+            ->addData($tags)
+            ->addColumn(ColumnData::getInstance('title')
+                ->enableTranslationColumn()
+            )
+            ->addColumn(ColumnEdit::getInstance('edit'))
+            ->addColumn(ColumnActive::getInstance('active'))
+            ->addColumn(ColumnDelete::getInstance('delete'))
+        ;
+    }
+
+    private function __tags_add_edit_form($data = NULL)
+    {
+        $tag = new ArticleTagEntity();
+        return CmsFormHelper::outputForm($tag->getDbTableName(), [
+            'data' => $data,
+            'button' => __('Add'),
+            'fields' => [
+                'title' => [
+                    'translation' => true,
+                ],
+            ],
+            'unset' => [
+                'active',
+            ],
+        ]);
     }
 
     public function tags_add()
@@ -234,29 +263,77 @@ class CmsArticles
             ->addCrumb(__('Tags'))
             ->addCrumb(__('Add new Tag'))
         ;
+
+        echo $this->__tags_add_edit_form();
     }
 
     public function tags_edit()
     {
+        $tag = new ArticleTagEntity($_GET['id']);
+
         echo BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Tags'))
             ->addCrumb('TITLE')
         ;
+
+        echo $this->__tags_add_edit_form($tag)
+            ->setSubmitButton('Update')
+        ;
     }
 
     public function _tags_add()
     {
+        $tag = new ArticleTagEntity();
+        $tag->loadDataFromArray($_POST);
+        $tag->save();
 
+        Messages::sendGreenAlert('Tag created');
+        App::add('Tag ' . $tag->getTitle() . ' created');
+
+        go('?p=' . P . '&do=tags&highlight='. $tag->getId());
     }
 
     public function _tags_edit()
     {
+        $tag = new ArticleTagEntity($_GET['id']);
+        $tag->loadDataFromArray($_POST);
+        $tag->save();
 
+        Messages::sendGreenAlert('Tag updated');
+        App::add('Tag ' . $tag->getTitle() . ' updated');
+
+        go('?p=' . P . '&do=tags&highlight='. $tag->getId());
+    }
+
+    public function _tags_active()
+    {
+        $tag = new ArticleTagEntity($_GET['id']);
+        $tag->flipBoolValue('active');
+        $tag->save();
+
+        Messages::sendGreenAlert('Tag updated');
+        App::add('Tag ' . $tag->getTitle() . ' updated');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P . '&do=tags&highlight='. $tag->getId());
     }
 
     public function _tags_delete()
     {
+        $tag = new ArticleTagEntity($_GET['id']);
+        $tag->deleteObject();
 
+        Messages::sendGreenAlert('Tag deleted');
+        App::add('Tag ' . $tag->getTitle() . ' deleted');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P . '&do=tags&highlight='. $tag->getId());
     }
 }
