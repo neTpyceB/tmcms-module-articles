@@ -6,6 +6,7 @@ use TMCms\Orm\EntityRepository;
 
 class ArticleEntityRepository extends EntityRepository
 {
+    protected $translation_fields = ['title', 'description', 'text'];
     protected $table_structure = [
         'fields' => [
             'category_id' => [
