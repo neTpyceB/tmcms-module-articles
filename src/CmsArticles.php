@@ -194,7 +194,9 @@ class CmsArticles
 
         echo CmsTable::getInstance()
             ->addData($categories)
-            ->addColumn(ColumnData::getInstance('title'))
+            ->addColumn(ColumnData::getInstance('title')
+                ->enableTranslationColumn()
+            )
             ->addColumn(ColumnEdit::getInstance('edit'))
             ->addColumn(ColumnActive::getInstance('active'))
             ->addColumn(ColumnDelete::getInstance('delete'))
