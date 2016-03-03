@@ -11,6 +11,7 @@ use TMCms\HTML\Cms\Column\ColumnActive;
 use TMCms\HTML\Cms\Column\ColumnData;
 use TMCms\HTML\Cms\Column\ColumnDelete;
 use TMCms\HTML\Cms\Column\ColumnEdit;
+use TMCms\HTML\Cms\Column\ColumnImg;
 use TMCms\HTML\Cms\Columns;
 use TMCms\Log\App;
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntity;
@@ -47,6 +48,10 @@ class CmsArticles
 
         echo CmsTable::getInstance()
             ->addData($news)
+            ->addColumn(ColumnImg::getInstance()
+                ->imgHeight(130)
+                ->href('?p='. P .'&do=edit&id={%id%}')
+            )
             ->addColumn(ColumnData::getInstance('title')
                 ->enableTranslationColumn()
             )
@@ -75,16 +80,29 @@ class CmsArticles
                     'type' => 'multiselect',
                     'options' => ModuleArticles::getTagPairs(),
                 ],
+                'image' => [
+                    'edit' => 'files',
+                    'allowed_extensions' => 'png,jpeg,jpg',
+                    'path' => DIR_PUBLIC_URL . 'articles/'
+                ],
                 'title' => [
                     'translation' => true,
                 ],
                 'description' => [
+                    'type' => 'textarea',
                     'translation' => true,
                 ],
                 'text' => [
                     'type' => 'textarea',
                     'translation' => true,
                 ],
+                'meta_keywords' => [
+                    'translation' => true,
+                ],
+                'meta_description' => [
+                    'translation' => true,
+                ],
+
             ],
             'unset' => [
                 'active',

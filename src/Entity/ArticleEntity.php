@@ -13,7 +13,7 @@ use TMCms\Orm\Entity;
  */
 class ArticleEntity extends Entity
 {
-    protected $translation_fields = ['title', 'description', 'text'];
+    protected $translation_fields = ['title', 'description', 'text', 'meta_keywords', 'meta_description'];
 
     protected function afterSave()
     {
