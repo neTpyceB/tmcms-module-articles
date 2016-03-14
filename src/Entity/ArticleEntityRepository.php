@@ -15,6 +15,9 @@ class ArticleEntityRepository extends EntityRepository
     protected $translation_fields = ['title', 'description', 'text', 'meta_keywords', 'meta_description'];
     protected $table_structure = [
         'fields' => [
+            'uid' => [
+                'type' => 'varchar'
+            ],
             'category_id' => [
                 'type' => 'index',
             ],

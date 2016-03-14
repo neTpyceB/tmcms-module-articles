@@ -21,6 +21,7 @@ use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntity;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagRelationEntityRepository;
+use TMCms\Strings\UID;
 
 defined('INC') or exit;
 
@@ -119,6 +120,8 @@ class CmsArticles
         ;
 
         echo $this->__add_edit_form();
+
+        UID::text2uidJS(true, array('title_ru_' => 'uid'), 255, 1, 1);
     }
 
     public function edit()
@@ -137,6 +140,8 @@ class CmsArticles
         echo $this->__add_edit_form($article)
             ->setSubmitButton('Update')
         ;
+
+        UID::text2uidJS(true, array('title_ru_' => 'uid'), 255, 1, 0);
     }
 
     public function _add()
