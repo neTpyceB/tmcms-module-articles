@@ -91,10 +91,12 @@ class CmsArticles
                 ],
                 'description' => [
                     'type' => 'textarea',
+                    'edit' => 'wysiwyg',
                     'translation' => true,
                 ],
                 'text' => [
                     'type' => 'textarea',
+                    'edit' => 'wysiwyg',
                     'translation' => true,
                 ],
                 'meta_keywords' => [
