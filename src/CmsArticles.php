@@ -123,7 +123,7 @@ class CmsArticles
 
         echo $this->__add_edit_form();
 
-        UID::text2uidJS(true, array('title_ru_' => 'uid'), 255, 1, 1);
+        UID::text2uidJS(true, array('title_'. LNG .'_' => 'uid'), 255, 1, 1);
     }
 
     public function edit()
@@ -143,7 +143,7 @@ class CmsArticles
             ->setSubmitButton('Update')
         ;
 
-        UID::text2uidJS(true, array('title_ru_' => 'uid'), 255, 1, 0);
+        UID::text2uidJS(true, array('title_'. LNG .'_' => 'uid'), 255, 1, 0);
     }
 
     public function _add()
