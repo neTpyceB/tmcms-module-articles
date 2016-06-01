@@ -43,6 +43,11 @@ class ArticleEntity extends Entity
         return $this;
     }
 
+	protected function beforeCreate()
+	{
+		$this->setTsCreated(NOW);
+	}
+
     protected function beforeDelete()
     {
         // Remove existing relations to tags
