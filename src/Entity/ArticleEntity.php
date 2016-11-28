@@ -18,7 +18,7 @@ class ArticleEntity extends Entity
     protected function afterSave()
     {
         // If tags are not changed - do not make changes in DB
-        if (!$this->isFieldChangedForUpdate('tags')) {
+        if (!$this->isFieldChangedForUpdate('tags') && !$this->isFieldChangedForUpdate('tags_ordered')) {
             return $this;
         }
 
