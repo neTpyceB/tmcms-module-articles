@@ -305,26 +305,9 @@ class CmsArticles
             ->addCrumb($category->getTitle())
         ;
 
-        echo $this->__tags_add_edit_form($category)
+        echo $this->__categories_add_edit_form($category)
             ->setSubmitButton('Update')
         ;
-    }
-
-    private function __tags_add_edit_form($data = NULL)
-    {
-        $tag = new ArticleTagEntity();
-        return CmsFormHelper::outputForm($tag->getDbTableName(), [
-            'data' => $data,
-            'button' => __('Add'),
-            'fields' => [
-                'title' => [
-                    'translation' => true,
-                ],
-            ],
-            'unset' => [
-                'active',
-            ],
-        ]);
     }
 
     public function _categories_add()
@@ -413,6 +396,23 @@ class CmsArticles
         ;
 
         echo $this->__tags_add_edit_form();
+    }
+
+    private function __tags_add_edit_form($data = NULL)
+    {
+        $tag = new ArticleTagEntity();
+        return CmsFormHelper::outputForm($tag->getDbTableName(), [
+            'data' => $data,
+            'button' => __('Add'),
+            'fields' => [
+                'title' => [
+                    'translation' => true,
+                ],
+            ],
+            'unset' => [
+                'active',
+            ],
+        ]);
     }
 
     public function tags_edit()
