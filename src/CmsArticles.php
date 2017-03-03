@@ -4,15 +4,15 @@ namespace TMCms\Modules\Articles;
 
 use TMCms\Admin\Menu;
 use TMCms\Admin\Messages;
+use TMCms\DB\SQL;
 use TMCms\HTML\BreadCrumbs;
 use TMCms\HTML\Cms\CmsFormHelper;
 use TMCms\HTML\Cms\CmsTable;
+use TMCms\HTML\Cms\CmsTableHelper;
 use TMCms\HTML\Cms\Column\ColumnActive;
 use TMCms\HTML\Cms\Column\ColumnData;
 use TMCms\HTML\Cms\Column\ColumnDelete;
 use TMCms\HTML\Cms\Column\ColumnEdit;
-use TMCms\HTML\Cms\Column\ColumnImg;
-use TMCms\HTML\Cms\Columns;
 use TMCms\Log\App;
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntity;
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
@@ -25,44 +25,65 @@ use TMCms\Strings\UID;
 
 defined('INC') or exit;
 
-Menu::getInstance()
-    ->addSubMenuItem('categories')
-    ->addSubMenuItem('tags')
-;
-
 class CmsArticles
 {
     /** Articles */
 
     public function _default()
     {
-        $news = new ArticleEntityRepository();
-        $category = new ArticleCategoryEntityRepository();
+        $articles = new ArticleEntityRepository();
+        $articles->addOrderByField();
 
-        echo BreadCrumbs::getInstance()
+        $categories = new ArticleCategoryEntityRepository();
+        $categories = $categories->getPairs('title');
+
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
+            ->addAction(__('Add Article'), '?p=' . P . '&do=add')
         ;
 
-        echo Columns::getInstance()
-            ->add('<a class="btn btn-success" href="?p=' . P . '&do=add">'. __('Add Article') . '</a><br><br>', ['align' => 'right'])
+        echo CmsTableHelper::outputTable([
+            'data' => $articles,
+            'columns' => [
+                'image' => [
+                    'type' => 'image',
+                ],
+                'title' => [
+                    'translation' => true,
+                ],
+                'category_id' => [
+                    'title' => __('Category'),
+                    'pairs' => $categories,
+                ],
+                'show_on_main' => [
+                    'type' => 'active'
+                ],
+            ],
+            'filters' => [
+                'category_id' => [
+                    'type' => 'select',
+                    'title' => 'Category',
+                    'auto_submit' => true,
+                    'options' => [-1 => __('All')] + $categories,
+                ],
+            ],
+            'active' => true,
+            'edit' => true,
+            'order' => true,
+            'delete' => true,
+        ]);
+    }
+
+    public function add()
+    {
+        BreadCrumbs::getInstance()
+            ->addCrumb(__('Articles'))
+            ->addCrumb(__('Add new Article'))
         ;
 
-        echo CmsTable::getInstance()
-            ->addData($news)
-            ->addColumn(ColumnImg::getInstance()
-                ->imgHeight(130)
-                ->href('?p='. P .'&do=edit&id={%id%}')
-            )
-            ->addColumn(ColumnData::getInstance('title')
-                ->enableTranslationColumn()
-            )
-            ->addColumn(ColumnData::getInstance('category_id')
-                ->setPairedDataOptionsForKeys($category->getPairs('title'))
-            )
-            ->addColumn(ColumnEdit::getInstance('edit'))
-            ->addColumn(ColumnActive::getInstance('active'))
-            ->addColumn(ColumnDelete::getInstance('delete'))
-        ;
+        echo $this->__add_edit_form();
+
+        UID::text2uidJS(true, array('title_' . LNG . '_' => 'slug'), 255, 1, 1);
     }
 
     private function __add_edit_form($data = NULL)
@@ -73,6 +94,9 @@ class CmsArticles
             'data' => $data,
             'button' => __('Add'),
             'fields' => [
+                'slug' => [
+                    'hint' => 'Do not enter manually. It will fill in automatically when you type Title',
+                ],
                 'category_id' => [
                     'options' => ModuleArticles::getCategoryPairs(),
                     'title' => 'Category',
@@ -108,28 +132,17 @@ class CmsArticles
 
             ],
             'unset' => [
+                'order',
                 'active',
                 'ts_created',
             ],
         ]);
     }
 
-    public function add()
-    {
-        echo BreadCrumbs::getInstance()
-            ->addCrumb(__('Articles'))
-            ->addCrumb(__('Add new Article'))
-        ;
-
-        echo $this->__add_edit_form();
-
-        UID::text2uidJS(true, array('title_'. LNG .'_' => 'uid'), 255, 1, 1);
-    }
-
     public function edit()
     {
         $article = new ArticleEntity($_GET['id']);
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb($article->getTitle())
         ;
@@ -143,7 +156,7 @@ class CmsArticles
             ->setSubmitButton('Update')
         ;
 
-        UID::text2uidJS(true, array('title_'. LNG .'_' => 'uid'), 255, 1, 0);
+        UID::text2uidJS(true, array('title_' . LNG . '_' => 'slug'), 255, 1, 0);
     }
 
     public function _add()
@@ -170,6 +183,22 @@ class CmsArticles
         go('?p=' . P . '&highlight='. $article->getId());
     }
 
+    public function _show_on_main()
+    {
+        $article = new ArticleEntity($_GET['id']);
+        $article->flipBoolValue('show_on_main');
+        $article->save();
+
+        Messages::sendGreenAlert('Article updated');
+        App::add('Article ' . $article->getTitle() . ' updated');
+
+        if (IS_AJAX_REQUEST) {
+            die('1');
+        }
+
+        go('?p=' . P . '&highlight=' . $article->getId());
+    }
+
     public function _active()
     {
         $article = new ArticleEntity($_GET['id']);
@@ -184,6 +213,19 @@ class CmsArticles
         }
 
         go('?p=' . P . '&highlight='. $article->getId());
+    }
+
+    public function _order()
+    {
+        $article = new ArticleEntity($_GET['id']);
+
+        if (IS_AJAX_REQUEST) {
+            SQL::orderMoveByStep($article->getId(), $article->getDbTableName(), $_GET['direct'], $_GET['step']);
+            die(1);
+        }
+
+        SQL::order($article->getId(), $article->getDbTableName(), $_GET['direct']);
+        back();
     }
 
     public function _delete()
@@ -208,13 +250,10 @@ class CmsArticles
     {
         $categories = new ArticleCategoryEntityRepository();
 
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Categories'))
-        ;
-
-        echo Columns::getInstance()
-            ->add('<a class="btn btn-success" href="?p=' . P . '&do=categories_add">'. __('Add Category') . '</a><br><br>', ['align' => 'right'])
+            ->addAction(__('Add Category'), '?p=' . P . '&do=categories_add')
         ;
 
         echo CmsTable::getInstance()
@@ -226,6 +265,16 @@ class CmsArticles
             ->addColumn(ColumnActive::getInstance('active'))
             ->addColumn(ColumnDelete::getInstance('delete'))
         ;
+    }
+
+    public function categories_add()
+    {
+        BreadCrumbs::getInstance()
+            ->addCrumb(__('Articles'))
+            ->addCrumb(__('Categories'))
+            ->addCrumb(__('Add new Category'));
+
+        echo $this->__categories_add_edit_form();
     }
 
     private function __categories_add_edit_form($data = NULL)
@@ -245,22 +294,11 @@ class CmsArticles
         ]);
     }
 
-    public function categories_add()
-    {
-        echo BreadCrumbs::getInstance()
-            ->addCrumb(__('Articles'))
-            ->addCrumb(__('Categories'))
-            ->addCrumb(__('Add new Category'))
-        ;
-
-        echo $this->__categories_add_edit_form();
-    }
-
     public function categories_edit()
     {
         $category = new ArticleCategoryEntity($_GET['id']);
 
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Categories'))
             ->addCrumb($category->getTitle())
@@ -269,6 +307,23 @@ class CmsArticles
         echo $this->__tags_add_edit_form($category)
             ->setSubmitButton('Update')
         ;
+    }
+
+    private function __tags_add_edit_form($data = NULL)
+    {
+        $tag = new ArticleTagEntity();
+        return CmsFormHelper::outputForm($tag->getDbTableName(), [
+            'data' => $data,
+            'button' => __('Add'),
+            'fields' => [
+                'title' => [
+                    'translation' => true,
+                ],
+            ],
+            'unset' => [
+                'active',
+            ],
+        ]);
     }
 
     public function _categories_add()
@@ -331,13 +386,10 @@ class CmsArticles
     public function tags() {
         $tags = new ArticleTagEntityRepository();
 
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Tags'))
-        ;
-
-        echo Columns::getInstance()
-            ->add('<a class="btn btn-success" href="?p=' . P . '&do=tags_add">'. __('Add Tag') . '</a><br><br>', ['align' => 'right'])
+            ->addAction(__('Add Tag'), '?p=' . P . '&do=tags_add')
         ;
 
         echo CmsTable::getInstance()
@@ -351,26 +403,9 @@ class CmsArticles
         ;
     }
 
-    private function __tags_add_edit_form($data = NULL)
-    {
-        $tag = new ArticleTagEntity();
-        return CmsFormHelper::outputForm($tag->getDbTableName(), [
-            'data' => $data,
-            'button' => __('Add'),
-            'fields' => [
-                'title' => [
-                    'translation' => true,
-                ],
-            ],
-            'unset' => [
-                'active',
-            ],
-        ]);
-    }
-
     public function tags_add()
     {
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Tags'))
             ->addCrumb(__('Add new Tag'))
@@ -383,7 +418,7 @@ class CmsArticles
     {
         $tag = new ArticleTagEntity($_GET['id']);
 
-        echo BreadCrumbs::getInstance()
+        BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
             ->addCrumb(__('Tags'))
             ->addCrumb($tag->getTitle())

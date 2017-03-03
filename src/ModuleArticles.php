@@ -3,6 +3,7 @@
 namespace TMCms\Modules\Articles;
 
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\IModule;
 use TMCms\Traits\singletonInstanceTrait;
@@ -29,5 +30,32 @@ class ModuleArticles implements IModule
         }
         $tags->addOrderByField('title');
         return $tags->getPairs('title');
+    }
+
+    /**
+     * @param array $params ['active' => 'true', 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => 'true']
+     * @return array
+     */
+    public static function getArticles(array $params)
+    {
+        $articles = new ArticleEntityRepository();
+
+        if (isset($params['active'])) {
+            $articles->setWhereActive(1);
+        }
+
+        if (isset($params['show_on_main'])) {
+            $articles->setWhereShowOnMain(1);
+        }
+
+        if (isset($params['limit'])) {
+            $articles->setLimit(abs((int)$params['limit']));
+        }
+
+        if (isset($params['order_by'])) {
+            $articles->addOrderByField($params['order_by'], (int)isset($params['order_desc']));
+        }
+
+        return $articles->getAsArrayOfObjects();
     }
 }
