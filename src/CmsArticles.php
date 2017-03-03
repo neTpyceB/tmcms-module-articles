@@ -132,6 +132,7 @@ class CmsArticles
 
             ],
             'unset' => [
+                'show_on_main',
                 'order',
                 'active',
                 'ts_created',
