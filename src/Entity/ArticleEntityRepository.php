@@ -24,7 +24,7 @@ class ArticleEntityRepository extends EntityRepository
                 'type' => 'index',
             ],
             'show_on_main' => [
-                'type' => 'index',
+                'type' => 'ts',
             ],
             'title' => [
                 'type' => 'translation',
@@ -52,7 +52,7 @@ class ArticleEntityRepository extends EntityRepository
                 'type' => 'bool',
             ],
             'order' => [
-                'type' => 'ts',
+                'type' => 'order',
             ],
         ],
     ];
