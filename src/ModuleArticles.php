@@ -34,7 +34,7 @@ class ModuleArticles implements IModule
 
     /**
      * @param array $params ['active' => 'true', 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => 'true']
-     * @return array
+     * @return ArticleEntityRepository
      */
     public static function getArticles(array $params)
     {
@@ -56,6 +56,6 @@ class ModuleArticles implements IModule
             $articles->addOrderByField($params['order_by'], (int)isset($params['order_desc']));
         }
 
-        return $articles->getAsArrayOfObjects();
+        return $articles;
     }
 }
