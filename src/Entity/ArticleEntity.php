@@ -33,7 +33,7 @@ class ArticleEntity extends Entity
 
     public function getSlugUrl($lng = LNG)
     {
-        return Structure::getPathByLabel('articles') . $this->getSlug();
+        return Structure::getPathByLabel('articles') . $this->getSlug() . '/';
     }
 
     protected function afterSave()
