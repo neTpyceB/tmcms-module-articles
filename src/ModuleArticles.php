@@ -3,6 +3,7 @@
 namespace TMCms\Modules\Articles;
 
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleEntity;
 use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\IModule;
@@ -61,5 +62,19 @@ class ModuleArticles implements IModule
         }
 
         return $articles;
+    }
+
+    /**
+     * @param string $slug
+     * @return ArticleEntity
+     */
+    public static function getArticleBySlug($slug)
+    {
+        /** @var ArticleEntity $article */
+        $article = ArticleEntityRepository::findOneEntityByCriteria([
+            'slug' => $slug,
+        ]);
+
+        return $article;
     }
 }
