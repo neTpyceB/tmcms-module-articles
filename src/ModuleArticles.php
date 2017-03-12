@@ -5,6 +5,7 @@ namespace TMCms\Modules\Articles;
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleEntity;
 use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleRelationEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\IModule;
 use TMCms\Traits\singletonInstanceTrait;
@@ -37,7 +38,7 @@ class ModuleArticles implements IModule
      * @param array $params ['active' => 'true', 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => 'true']
      * @return ArticleEntityRepository
      */
-    public static function getArticles(array $params)
+    public static function getArticles(array $params = [])
     {
         $articles = new ArticleEntityRepository();
 
@@ -76,5 +77,34 @@ class ModuleArticles implements IModule
         ]);
 
         return $article;
+    }
+
+    /**
+     * @param array $params ['active' => 'true', 'article_id' => '3']
+     * @return ArticleEntityRepository
+     */
+    public static function getRelaredArticles($params = [])
+    {
+        if (!isset($params['article_id'])) {
+            dump('Param "article_id" required');
+        }
+
+        $relations = ArticleRelationEntityRepository::getInstance()
+            ->setWhereArticleId($params['article_id']);
+
+        $ids = $relations->getPairs('to_article_id');
+        if (!$ids) {
+            $ids = [0]; // To prevent selecting all
+        }
+
+        $articles = new ArticleEntityRepository($ids);
+
+        if (isset($params['active'])) {
+            $articles->setWhereActive(1);
+        }
+
+        $articles->addOrderByField();
+
+        return $articles;
     }
 }

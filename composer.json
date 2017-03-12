@@ -17,5 +17,8 @@
     "psr-4": {
       "TMCms\\Modules\\Articles\\": "src"
     }
+  },
+  "require": {
+    "devp-eu/tmcms-module-settings": "dev-master"
   }
 }

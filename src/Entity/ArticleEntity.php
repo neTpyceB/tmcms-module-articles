@@ -4,6 +4,7 @@ namespace TMCms\Modules\Articles\Entity;
 
 use TMCms\Config\Settings;
 use TMCms\DB\SQL;
+use TMCms\Modules\Settings\ModuleSettings;
 use TMCms\Orm\Entity;
 use TMCms\Routing\Structure;
 
@@ -20,8 +21,12 @@ use TMCms\Routing\Structure;
  * @method int getTsCreated()
  *
  * @method $this setOrder(int $order)
- * @method $this setTags(array $tags)
  * @method $this setTsCreated(int $ts)
+ *
+ * @method array getRelatedArticles()
+ * @method array getTags()
+ * @method $this setRelatedArticles(array $article_ids)
+ * @method $this setTags(array $tag_ids)
  */
 class ArticleEntity extends Entity
 {
@@ -39,25 +44,60 @@ class ArticleEntity extends Entity
 
     protected function afterSave()
     {
-        // If tags are not changed - do not make changes in DB
-        if (!$this->isFieldChangedForUpdate('tags') && !$this->isFieldChangedForUpdate('tags_ordered')) {
-            return $this;
+        //=== TAGS
+        if (ModuleSettings::getCustomSettingValue('articles', 'enabled_tags')) {
+            // If tags are not changed - do not make changes in DB
+            if ($this->isFieldChangedForUpdate('tags') || $this->isFieldChangedForUpdate('tags_ordered')) {
+                // Remove existing
+                ArticleTagRelationEntityRepository::getInstance()
+                    ->setWhereArticleId($this->getId())
+                    ->deleteObjectCollection();
+
+                // Create new relations
+                if ($this->getTags()) {
+                    $tag_clone = new ArticleTagRelationEntity();
+
+                    foreach ($this->getTags() as $tag_id) {
+                        $tag = clone $tag_clone;
+                        $tag->setArticleId($this->getId());
+                        $tag->setTagId($tag_id);
+                        $tag->save();
+                    }
+                }
+            }
         }
 
-        // Remove existing
-        ArticleTagRelationEntityRepository::getInstance()
-            ->setWhereArticleId($this->getId())
-            ->deleteObjectCollection();
+        //=== RELATED ARTICLES
+        if (ModuleSettings::getCustomSettingValue('articles', 'enabled_related_articles')) {
+            // If tags are not changed - do not make changes in DB
+            if ($this->isFieldChangedForUpdate('related_articles') || $this->isFieldChangedForUpdate('related_articles_ordered')) {
+                // Remove existing
+                ArticleRelationEntityRepository::getInstance()
+                    ->setWhereArticleId($this->getId())
+                    ->deleteObjectCollection();
 
-        // Create new relations
-        if (!empty($_POST['tags'])) {
-            $tag_clone = new ArticleTagRelationEntity();
+                // And bacwards
+                ArticleRelationEntityRepository::getInstance()
+                    ->setWhereToArticleId($this->getId())
+                    ->deleteObjectCollection();
 
-            foreach ($_POST['tags'] as $tag_id) {
-                $tag = clone $tag_clone;
-                $tag->setArticleId($this->getId());
-                $tag->setTagId($tag_id);
-                $tag->save();
+                // Create new relations - save both directions
+                if ($this->getRelatedArticles()) {
+                    $relation_clone = new ArticleRelationEntity();
+
+                    foreach ($this->getRelatedArticles() as $to_article_id) {
+                        $relation = clone $relation_clone;
+                        $relation->setArticleId($this->getId());
+                        $relation->setToArticleId($to_article_id);
+                        $relation->save();
+
+                        // Back way link
+                        $relation = clone $relation_clone;
+                        $relation->setArticleId($to_article_id);
+                        $relation->setToArticleId($this->getId());
+                        $relation->save();
+                    }
+                }
             }
         }
 
@@ -82,6 +122,16 @@ class ArticleEntity extends Entity
         // Remove existing relations to tags
         ArticleTagRelationEntityRepository::getInstance()
             ->setWhereArticleId($this->getId())
+            ->deleteObjectCollection();
+
+        // Remove existing relations to other articles
+        ArticleRelationEntityRepository::getInstance()
+            ->setWhereArticleId($this->getId())
+            ->deleteObjectCollection();
+
+        // And bacwards relations
+        ArticleRelationEntityRepository::getInstance()
+            ->setWhereToArticleId($this->getId())
             ->deleteObjectCollection();
 
         return $this;

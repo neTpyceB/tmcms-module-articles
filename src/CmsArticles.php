@@ -18,9 +18,11 @@ use TMCms\Modules\Articles\Entity\ArticleCategoryEntity;
 use TMCms\Modules\Articles\Entity\ArticleCategoryEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleEntity;
 use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleRelationEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntity;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagRelationEntityRepository;
+use TMCms\Modules\Settings\ModuleSettings;
 use TMCms\Strings\UID;
 
 defined('INC') or exit;
@@ -89,48 +91,59 @@ class CmsArticles
     private function __add_edit_form($data = NULL)
     {
         $article = new ArticleEntity();
+
+        $fields = [
+            'slug' => [
+                'hint' => 'Do not enter manually. It will fill in automatically when you type Title',
+            ],
+            'category_id' => [
+                'options' => ModuleArticles::getCategoryPairs(),
+                'title' => 'Category',
+            ],
+            'image' => [
+                'edit' => 'files',
+                'allowed_extensions' => 'png,jpeg,jpg',
+                'path' => DIR_PUBLIC_URL . 'articles/'
+            ],
+            'title' => [
+                'translation' => true,
+            ],
+            'description' => [
+                'type' => 'textarea',
+                'edit' => 'wysiwyg',
+                'translation' => true,
+            ],
+            'text' => [
+                'type' => 'textarea',
+                'edit' => 'wysiwyg',
+                'translation' => true,
+            ],
+            'meta_keywords' => [
+                'translation' => true,
+            ],
+            'meta_description' => [
+                'translation' => true,
+            ],
+        ];
+
+        if (ModuleSettings::getCustomSettingValue(P, 'enabled_tags')) {
+            $fields['tags'] = [
+                'type' => 'multiselect',
+                'options' => ModuleArticles::getTagPairs(),
+            ];
+        }
+
+        if (ModuleSettings::getCustomSettingValue(P, 'enabled_related_articles')) {
+            $fields['related_articles'] = [
+                'type' => 'multiselect',
+                'options' => ModuleArticles::getArticles()->getPairs('title'),
+            ];
+        }
+
         return CmsFormHelper::outputForm($article->getDbTableName(), [
-            'combine' => true,
             'data' => $data,
             'button' => __('Add'),
-            'fields' => [
-                'slug' => [
-                    'hint' => 'Do not enter manually. It will fill in automatically when you type Title',
-                ],
-                'category_id' => [
-                    'options' => ModuleArticles::getCategoryPairs(),
-                    'title' => 'Category',
-                ],
-                'tags' => [
-                    'type' => 'multiselect',
-                    'options' => ModuleArticles::getTagPairs(),
-                ],
-                'image' => [
-                    'edit' => 'files',
-                    'allowed_extensions' => 'png,jpeg,jpg',
-                    'path' => DIR_PUBLIC_URL . 'articles/'
-                ],
-                'title' => [
-                    'translation' => true,
-                ],
-                'description' => [
-                    'type' => 'textarea',
-                    'edit' => 'wysiwyg',
-                    'translation' => true,
-                ],
-                'text' => [
-                    'type' => 'textarea',
-                    'edit' => 'wysiwyg',
-                    'translation' => true,
-                ],
-                'meta_keywords' => [
-                    'translation' => true,
-                ],
-                'meta_description' => [
-                    'translation' => true,
-                ],
-
-            ],
+            'fields' => $fields,
             'unset' => [
                 'show_on_main',
                 'order',
@@ -151,6 +164,11 @@ class CmsArticles
         $article->setTags(ArticleTagRelationEntityRepository::getInstance()
             ->setWhereArticleId($article->getId())
             ->getPairs('tag_id')
+        );
+
+        $article->setRelatedArticles(ArticleRelationEntityRepository::getInstance()
+            ->setWhereArticleId($article->getId())
+            ->getPairs('to_article_id')
         );
 
         echo $this->__add_edit_form($article)
@@ -484,5 +502,36 @@ class CmsArticles
         }
 
         go('?p=' . P . '&do=tags');
+    }
+
+    public function settings()
+    {
+        echo ModuleSettings::requireTableForExternalModule(P, [
+            'enabled_tags' => [
+                'type' => 'checkbox',
+            ],
+            'enabled_related_articles' => [
+                'type' => 'checkbox',
+            ],
+        ]);
+    }
+
+    public function _settings()
+    {
+        ModuleSettings::requireUpdateModuleSettings(P, [
+            'enabled_tags' => [
+                'type' => 'checkbox',
+                'value' => 1,
+            ],
+            'enabled_related_articles' => [
+                'type' => 'checkbox',
+                'value' => 1,
+            ],
+        ]);
+
+        Messages::sendGreenAlert('Settings updates');
+        App::add('Settings updates');
+
+        back();
     }
 }
