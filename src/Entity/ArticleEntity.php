@@ -11,6 +11,7 @@ use TMCms\Routing\Structure;
  * Class ArticleEntity
  * @package TMCms\Modules\Articles\Entity
  *
+ * @method string getDescription()
  * @method string getImage()
  * @method int getOrder()
  * @method string getSlug()

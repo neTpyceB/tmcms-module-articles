@@ -48,6 +48,10 @@ class ModuleArticles implements IModule
             $articles->setWhereShowOnMain(1);
         }
 
+        if (isset($params['category_id']) && $params['category_id']) {
+            $articles->setWhereCategoryId($params['category_id']);
+        }
+
         if (isset($params['limit'])) {
             $articles->setLimit(abs((int)$params['limit']));
         }

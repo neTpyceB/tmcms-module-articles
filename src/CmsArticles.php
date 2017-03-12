@@ -250,6 +250,7 @@ class CmsArticles
     public function categories()
     {
         $categories = new ArticleCategoryEntityRepository();
+        $categories->addOrderByField('title');
 
         BreadCrumbs::getInstance()
             ->addCrumb(__('Articles'))
@@ -331,7 +332,7 @@ class CmsArticles
         Messages::sendGreenAlert('Category updated');
         App::add('Category ' . $category->getTitle() . ' updated');
 
-        go('?p=' . P . '&do=tags&highlight='. $category->getId());
+        go('?p=' . P . '&do=categories&highlight=' . $category->getId());
     }
 
     public function _categories_active()
