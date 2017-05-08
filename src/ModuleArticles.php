@@ -60,6 +60,8 @@ class ModuleArticles implements IModule
 
         if (isset($params['order_by'])) {
             $articles->addOrderByField($params['order_by'], (int)isset($params['order_desc']));
+        } else {
+            $articles->addOrderByField(); // Simple order
         }
 
         return $articles;
