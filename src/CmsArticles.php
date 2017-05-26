@@ -22,6 +22,8 @@ use TMCms\Modules\Articles\Entity\ArticleRelationEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntity;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagRelationEntityRepository;
+use TMCms\Modules\Gallery\ModuleGallery;
+use TMCms\Modules\Images\Entity\ImageEntityRepository;
 use TMCms\Modules\Settings\ModuleSettings;
 use TMCms\Strings\UID;
 
@@ -44,35 +46,51 @@ class CmsArticles
             ->addAction(__('Add Article'), '?p=' . P . '&do=add')
         ;
 
-        echo CmsTableHelper::outputTable([
-            'data' => $articles,
-            'columns' => [
-                'image' => [
-                    'type' => 'image',
-                ],
-                'title' => [
-                    'translation' => true,
-                ],
-                'category_id' => [
-                    'title' => __('Category'),
-                    'pairs' => $categories,
-                ],
-                'show_on_main' => [
-                    'type' => 'active'
-                ],
+        $galleries_enabled = ModuleSettings::getCustomSettingValue(P, 'enabled_galleries');
+
+        $columns = [
+            'image'       => [
+                'type' => 'image',
             ],
+            'title'       => [
+                'translation' => true,
+            ],
+            'category_id' => [
+                'title' => __('Category'),
+                'pairs' => $categories,
+            ],
+        ];
+
+        if ($galleries_enabled) {
+            $images = new ImageEntityRepository();
+            $images->setWhereItemType('articleentity');
+
+            $columns['gallery'] = [
+                'href'   => '?p=' . P . '&do=images&id={%id%}',
+                'type'   => 'gallery',
+                'images' => $images,
+            ];
+        }
+
+        $columns['show_on_main'] = [
+            'type' => 'active',
+        ];
+
+        echo CmsTableHelper::outputTable([
+            'data'    => $articles,
+            'columns' => $columns,
             'filters' => [
                 'category_id' => [
-                    'type' => 'select',
-                    'title' => 'Category',
+                    'type'        => 'select',
+                    'title'       => 'Category',
                     'auto_submit' => true,
-                    'options' => [-1 => __('All')] + $categories,
+                    'options'     => [-1 => __('All')] + $categories,
                 ],
             ],
-            'active' => true,
-            'edit' => true,
-            'order' => true,
-            'delete' => true,
+            'active'  => true,
+            'edit'    => true,
+            'order'   => true,
+            'delete'  => true,
         ]);
     }
 
@@ -507,10 +525,13 @@ class CmsArticles
     public function settings()
     {
         echo ModuleSettings::requireTableForExternalModule(P, [
-            'enabled_tags' => [
+            'enabled_tags'             => [
                 'type' => 'checkbox',
             ],
             'enabled_related_articles' => [
+                'type' => 'checkbox',
+            ],
+            'enabled_galleries'        => [
                 'type' => 'checkbox',
             ],
         ]);
@@ -519,7 +540,7 @@ class CmsArticles
     public function _settings()
     {
         ModuleSettings::requireUpdateModuleSettings(P, [
-            'enabled_tags' => [
+            'enabled_tags'             => [
                 'type' => 'checkbox',
                 'value' => 1,
             ],
@@ -527,11 +548,33 @@ class CmsArticles
                 'type' => 'checkbox',
                 'value' => 1,
             ],
+            'enabled_galleries'        => [
+                'type'  => 'checkbox',
+                'value' => 1,
+            ],
         ]);
 
         Messages::sendGreenAlert('Settings updates');
         App::add('Settings updates');
 
+        back();
+    }
+
+    public function images()
+    {
+        $obj = new ArticleEntity($_GET['id']);
+        echo ModuleGallery::getViewForCmsModules($obj);
+    }
+
+    public function _images_delete()
+    {
+        ModuleGallery::deleteImageForCmsModules($_GET['id']);
+        back();
+    }
+
+    public function _images_move()
+    {
+        ModuleGallery::orderImageForCmsModules($_GET['id'], $_GET['direct']);
         back();
     }
 }
