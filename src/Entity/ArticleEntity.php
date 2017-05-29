@@ -12,6 +12,7 @@ use TMCms\Routing\Structure;
  * Class ArticleEntity
  * @package TMCms\Modules\Articles\Entity
  *
+ * @method int getCategoryId()
  * @method string getDescription()
  * @method string getImage()
  * @method int getOrder()
@@ -20,6 +21,7 @@ use TMCms\Routing\Structure;
  * @method string getTitle()
  * @method int getTsCreated()
  *
+ * @method $this setCategoryId(int $category_id)
  * @method $this setOrder(int $order)
  * @method $this setTsCreated(int $ts)
  *

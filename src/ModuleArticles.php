@@ -7,6 +7,7 @@ use TMCms\Modules\Articles\Entity\ArticleEntity;
 use TMCms\Modules\Articles\Entity\ArticleEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleRelationEntityRepository;
 use TMCms\Modules\Articles\Entity\ArticleTagEntityRepository;
+use TMCms\Modules\Articles\Entity\ArticleTagRelationEntityRepository;
 use TMCms\Modules\IModule;
 use TMCms\Traits\singletonInstanceTrait;
 
@@ -35,7 +36,7 @@ class ModuleArticles implements IModule
     }
 
     /**
-     * @param array $params ['active' => true, 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => true, 'show_on_main' => true]
+     * @param array $params ['active' => true, 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => true, 'show_on_main' => true, 'tag_id' => 10, 'title_like' => 'tit']
      *
      * @return ArticleEntityRepository
      */
@@ -59,7 +60,17 @@ class ModuleArticles implements IModule
             $articles->setLimit(abs((int)$params['limit']));
         }
 
-        if (isset($params['order_by'])) {
+        if (isset($params['tag_id'])) {
+            $tag_relations = new ArticleTagRelationEntityRepository();
+            $tag_relations->setWhereTagId($params['tag_id']);
+            $articles->mergeWithCollection($tag_relations, 'id', 'article_id');
+        }
+
+        if (isset($params['title_like'])) {
+            $articles->addWhereFieldIsLike('title', $params['title_like']);
+        }
+
+        if (isset($params['order_by']) && trim($params['order_by']) != '') {
             $articles->addOrderByField($params['order_by'], (int)isset($params['order_desc']));
         } else {
             $articles->addOrderByField(); // Simple order

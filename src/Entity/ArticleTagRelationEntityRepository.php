@@ -9,6 +9,7 @@ use TMCms\Orm\EntityRepository;
  * @package TMCms\Modules\Articles\Entity
  *
  * @method $this setWhereArticleId(int $article_id)
+ * @method $this setWhereTagId(int $tag_id)
  */
 class ArticleTagRelationEntityRepository extends EntityRepository
 {
