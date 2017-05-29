@@ -35,7 +35,8 @@ class ModuleArticles implements IModule
     }
 
     /**
-     * @param array $params ['active' => 'true', 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => 'true']
+     * @param array $params ['active' => true, 'limit' => '3', 'order_by' => 'ts_created', 'order_desc' => true, 'show_on_main' => true]
+     *
      * @return ArticleEntityRepository
      */
     public static function getArticles(array $params = [])
