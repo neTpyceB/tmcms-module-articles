@@ -39,7 +39,7 @@ class ArticleEntity extends Entity
         return date(Settings::getDefaultDateFormat(), $this->getTsCreated());
     }
 
-    public function getSlugUrl($lng = LNG)
+    public function getSlugUrl($lng = LNG): string
     {
         return Structure::getPathByLabel('articles') . $this->getSlug() . '/';
     }
