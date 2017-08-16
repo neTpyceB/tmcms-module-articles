@@ -190,7 +190,7 @@ class CmsArticles
         );
 
         echo $this->__add_edit_form($article)
-            ->setSubmitButton('Update')
+            ->setButtonSubmit('Update')
         ;
 
         UID::textToUidJs(true, ['title_' . LNG . '_' => 'slug'], 255, 1, 0);
@@ -343,7 +343,7 @@ class CmsArticles
         ;
 
         echo $this->__categories_add_edit_form($category)
-            ->setSubmitButton('Update')
+            ->setButtonSubmit('Update')
         ;
     }
 
@@ -463,7 +463,7 @@ class CmsArticles
         ;
 
         echo $this->__tags_add_edit_form($tag)
-            ->setSubmitButton('Update')
+            ->setButtonSubmit('Update')
         ;
     }
 
