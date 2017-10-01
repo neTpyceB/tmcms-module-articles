@@ -572,7 +572,7 @@ class CmsArticles
         back();
     }
 
-    public function _images_move()
+    public function _images_order()
     {
         ModuleGallery::orderImageForCmsModules($_GET['id'], $_GET['direct']);
         back();
